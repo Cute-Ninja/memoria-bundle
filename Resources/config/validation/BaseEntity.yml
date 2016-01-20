@@ -5,10 +5,8 @@ CuteNinja\MemoriaBundle\Entity\BaseEntity:
             - Choice:
                 choices: [active, inactive]
         creation:
-            - NotNull: ~
             - Type:
                 type: \DateTime
         lastUpdate:
-            - NotNull: ~
             - Type:
                 type: \DateTime
