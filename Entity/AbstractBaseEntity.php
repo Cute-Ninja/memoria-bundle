@@ -7,7 +7,7 @@ namespace CuteNinja\MemoriaBundle\Entity;
  *
  * @package CuteNinja\MemoriaBundle\Entity
  */
-abstract class BaseEntity
+abstract class AbstractBaseEntity
 {
     const STATUS_ACTIVE = 'active';
     const STATUS_INACTIVE = 'inactive';
