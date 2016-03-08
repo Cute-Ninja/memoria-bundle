@@ -13,22 +13,6 @@ use Doctrine\ORM\QueryBuilder;
 abstract class AbstractCriteriaRepository extends DoctrineEntityRepository
 {
     /**
-     * @param array $criteria
-     * @param array $order
-     * @param bool  $withJoin
-     *
-     * @return QueryBuilder
-     */
-    abstract public function getForListActionQueryBuilder($criteria, $order, $withJoin);
-
-    /**
-     * @param $entityId
-     *
-     * @return mixed
-     */
-    abstract public function getForGetAction($entityId);
-
-    /**
      * @param QueryBuilder $queryBuilder
      * @param array        $criteria
      */
