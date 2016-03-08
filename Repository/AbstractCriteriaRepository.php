@@ -124,4 +124,62 @@ abstract class AbstractCriteriaRepository extends DoctrineEntityRepository
 
         return [$condition, $parameterField, $parameterValue];
     }
+
+    /**
+     * Clean a QueryBuilder (Ex: Remove duplicate join)
+     *
+     * @param QueryBuilder $queryBuilder
+     *
+     * @return QueryBuilder $queryBuilder
+     */
+    protected function cleanQueryBuilder(QueryBuilder $queryBuilder)
+    {
+        $this->cleanQueryBuilderDqlPart($queryBuilder, 'join');
+        $this->cleanQueryBuilderDqlPart($queryBuilder, 'select');
+
+        return $queryBuilder;
+    }
+
+    /**
+     * Remove duplication on a DQL part (join, select, ...)
+     *
+     * @param QueryBuilder $queryBuilder
+     * @param string       $dqlPartName
+     */
+    protected function cleanQueryBuilderDqlPart(QueryBuilder $queryBuilder, $dqlPartName)
+    {
+        $dqlPart = $queryBuilder->getDQLPart($dqlPartName);
+        if (count($dqlPart)) {
+            $queryBuilder->resetDQLPart($dqlPartName);
+
+            if ($dqlPartName == 'join') {
+                foreach ($dqlPart as $root => $elements) {
+                    $newDqlPart = [];
+                    foreach ($elements as $element) {
+                        preg_match('/^(?P<joinType>[^ ]+) JOIN (?P<join>[^ ]+) (?P<alias>[^ ]+)/', $element->__toString(), $matches);
+                        if (!array_key_exists($matches['alias'], $newDqlPart)) {
+                            $newDqlPart[$matches['alias']] = $element;
+                        }
+                    }
+                    $dqlPart[$root] = array_values($newDqlPart);
+                }
+
+                // TODO Reorder ?
+                $dqlPart = array_shift($dqlPart);
+                foreach ($dqlPart as $element) {
+                    $queryBuilder->add($dqlPartName, [$element], true);
+                }
+            } else {
+                foreach ($dqlPart as $element) {
+                    $newDqlPart[$element->__toString()] = $element;
+                }
+                $dqlPart = array_values($newDqlPart);
+
+                // TODO Reorder ?
+                foreach ($dqlPart as $element) {
+                    $queryBuilder->add($dqlPartName, $element, true);
+                }
+            }
+        }
+    }
 }
