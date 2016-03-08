@@ -13,10 +13,73 @@ use Doctrine\ORM\QueryBuilder;
 abstract class AbstractCriteriaRepository extends DoctrineEntityRepository
 {
     /**
+     * @param array|null        $select
+     * @param array|null        $criteria
+     * @param array|null        $orderBy
+     * @param integer|null      $limit
+     * @param integer|null      $offset
+     * @param QueryBuilder|null $queryBuilder
+     *
+     * @return QueryBuilder
+     */
+    public function getByCriteriaQueryBuilder(
+        array $select = null,
+        array $criteria = null,
+        array $orderBy = null,
+        $limit = null,
+        $offset = null,
+        QueryBuilder $queryBuilder = null
+    ) {
+        $criteria = is_null($criteria) ? [] : $criteria;
+        $orderBy  = is_null($orderBy) ? [] : $orderBy;
+
+        if (is_null($queryBuilder)) {
+            $queryBuilder = $this->getQueryBuilder();
+        }
+
+        // Select
+        $select = is_null($select) ? [] : $select;
+        foreach ($select as $alias) {
+            $selectMethod = 'addSelect' . ucfirst($alias);
+            if (method_exists($this, $selectMethod)) {
+                $this->$selectMethod($queryBuilder);
+            } else {
+                $queryBuilder->addSelect($alias);
+            }
+        }
+
+        foreach ($criteria as $field => $value) {
+            if ($field) {
+                $this->{'addCriteria' . ucfirst($field)}($queryBuilder, $value);
+            }
+        }
+
+        foreach ($orderBy as $field => $direction) {
+            if ($field) {
+                $this->{'addOrderBy' . ucfirst($field)}($queryBuilder, $direction);
+            }
+        }
+
+        // Pagination
+        if ($limit) {
+            $queryBuilder->setMaxResults($limit);
+        }
+
+        if ($offset) {
+            $queryBuilder->setFirstResult($offset);
+        }
+
+        // Clean Query
+        $this->cleanQueryBuilder($queryBuilder);
+
+        return $queryBuilder;
+    }
+
+    /**
      * @param QueryBuilder $queryBuilder
      * @param array        $criteria
      */
-    public function addCriteria(QueryBuilder $queryBuilder, array $criteria)
+    protected function addCriteria(QueryBuilder $queryBuilder, array $criteria)
     {
         foreach ($criteria as $field => $value) {
             if ($field) {
@@ -29,13 +92,22 @@ abstract class AbstractCriteriaRepository extends DoctrineEntityRepository
      * @param QueryBuilder $queryBuilder
      * @param array        $orderBys
      */
-    public function addOrderBys(QueryBuilder $queryBuilder, array $orderBys)
+    protected function addOrderBys(QueryBuilder $queryBuilder, array $orderBys)
     {
         foreach ($orderBys as $criterion => $direction) {
             if ($criterion) {
                 $this->{'addOrderBy' . ucfirst($criterion)}($queryBuilder, $direction);
             }
         }
+    }
+
+    /**
+     * @return \Doctrine\ORM\QueryBuilder
+     */
+    protected function getQueryBuilder()
+    {
+        // we did not put this method as abstract because we do not want to have compilation error for entities that do not require getByCriteriaQueryBuilder
+        throw new \BadMethodCallException('The use of getByCriteriaQueryBuilder method require to override the method getQueryBuilder');
     }
 
     /**
