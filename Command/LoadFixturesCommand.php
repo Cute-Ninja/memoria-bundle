@@ -6,6 +6,7 @@ use Doctrine\DBAL\Exception\ConnectionException;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\SchemaTool;
 use h4cc\AliceFixturesBundle\Fixtures\FixtureManager;
+use Nelmio\Alice\Persister\Doctrine;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -40,10 +41,7 @@ class LoadFixturesCommand extends ContainerAwareCommand
 
         $this->generateSchemas($entityManagers);
 
-        $manager  = $this->getFixtureManager();
-        $fixtures = $manager->loadFiles($this->getFixturesFiles());
-
-        $manager->persist($fixtures);
+        $this->getContainer()->get('hautelook_alice.fixtures.loader')->load(new Doctrine($this->getEntityManager()), $this->getFixturesFiles());
     }
 
     /**
@@ -86,14 +84,6 @@ class LoadFixturesCommand extends ContainerAwareCommand
     private function getEntityManager($managerName = 'default')
     {
         return $this->getContainer()->get('doctrine')->getManager($managerName);
-    }
-
-    /**
-     * @return FixtureManager
-     */
-    private function getFixtureManager()
-    {
-        return $this->getContainer()->get('h4cc_alice_fixtures.manager');
     }
 
     /**
