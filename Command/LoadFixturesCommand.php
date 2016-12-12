@@ -5,7 +5,6 @@ namespace CuteNinja\MemoriaBundle\Command;
 use Doctrine\DBAL\Exception\ConnectionException;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\SchemaTool;
-use h4cc\AliceFixturesBundle\Fixtures\FixtureManager;
 use Nelmio\Alice\Persister\Doctrine;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
@@ -50,7 +49,7 @@ class LoadFixturesCommand extends ContainerAwareCommand
     private function generateSchemas(array $entityManagers)
     {
         $defaultConnection = $this->getEntityManager()->getConnection();
-        $metadata = $this->getEntityManager()->getMetadataFactory()->getAllMetadata();
+        $metadata          = $this->getEntityManager()->getMetadataFactory()->getAllMetadata();
 
         foreach ($entityManagers as $entityManager) {
             $customConnection     = $this->getEntityManager($entityManager)->getConnection();
@@ -79,9 +78,11 @@ class LoadFixturesCommand extends ContainerAwareCommand
     }
 
     /**
+     * @param string $managerName
+     *
      * @return EntityManager
      */
-    private function getEntityManager($managerName = 'default')
+    protected function getEntityManager($managerName = 'default')
     {
         return $this->getContainer()->get('doctrine')->getManager($managerName);
     }
@@ -91,7 +92,7 @@ class LoadFixturesCommand extends ContainerAwareCommand
      */
     private function getFixturesFiles()
     {
-        $files = array();
+        $files    = [];
         $fixtures = $this->getContainer()->getParameter('fixtures');
 
         foreach ($fixtures as $fixture) {
