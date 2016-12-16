@@ -5,7 +5,7 @@ namespace CuteNinja\MemoriaBundle\Command;
 use Doctrine\DBAL\Exception\ConnectionException;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\SchemaTool;
-use h4cc\AliceFixturesBundle\Fixtures\FixtureManager;
+use Nelmio\Alice\Persister\Doctrine;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -40,10 +40,7 @@ class LoadFixturesCommand extends ContainerAwareCommand
 
         $this->generateSchemas($entityManagers);
 
-        $manager  = $this->getFixtureManager();
-        $fixtures = $manager->loadFiles($this->getFixturesFiles());
-
-        $manager->persist($fixtures);
+        $this->getContainer()->get('hautelook_alice.fixtures.loader')->load(new Doctrine($this->getEntityManager()), $this->getFixturesFiles());
     }
 
     /**
@@ -52,7 +49,7 @@ class LoadFixturesCommand extends ContainerAwareCommand
     private function generateSchemas(array $entityManagers)
     {
         $defaultConnection = $this->getEntityManager()->getConnection();
-        $metadata = $this->getEntityManager()->getMetadataFactory()->getAllMetadata();
+        $metadata          = $this->getEntityManager()->getMetadataFactory()->getAllMetadata();
 
         foreach ($entityManagers as $entityManager) {
             $customConnection     = $this->getEntityManager($entityManager)->getConnection();
@@ -81,19 +78,13 @@ class LoadFixturesCommand extends ContainerAwareCommand
     }
 
     /**
+     * @param string $managerName
+     *
      * @return EntityManager
      */
-    private function getEntityManager($managerName = 'default')
+    protected function getEntityManager($managerName = 'default')
     {
         return $this->getContainer()->get('doctrine')->getManager($managerName);
-    }
-
-    /**
-     * @return FixtureManager
-     */
-    private function getFixtureManager()
-    {
-        return $this->getContainer()->get('h4cc_alice_fixtures.manager');
     }
 
     /**
@@ -101,7 +92,7 @@ class LoadFixturesCommand extends ContainerAwareCommand
      */
     private function getFixturesFiles()
     {
-        $files = array();
+        $files    = [];
         $fixtures = $this->getContainer()->getParameter('fixtures');
 
         foreach ($fixtures as $fixture) {
